@@ -1,9 +1,34 @@
-FROM ubuntu:noble-20260113 AS cert
+# FROM ubuntu:noble-20260113 AS cert
+FROM ubuntu@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b AS cert
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates
 
-FROM ubuntu:noble-20260113 AS build
+# FROM ubuntu:noble-20260113 AS apt
+FROM ubuntu@sha256:cd1dba651b3080c3686ecf4e3c4220f026b521fb76978881737d24f200828b2b AS apt
+
+ENV APT_SNAPSHOT=20260205T000000Z
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+COPY --from=cert /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+RUN echo "APT::Snapshot ${APT_SNAPSHOT};" | tee /etc/apt/apt.conf.d/50snapshot
+
+# Deps for build.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    git \
+    make \
+    zip
+
+# Cleanup for reproducible container.
+RUN apt-get clean \
+  && find /var/log/apt -type f -delete \
+  && rm /var/log/dpkg.log /var/log/alternatives.log /var/cache/ldconfig/aux-cache
+
+FROM apt AS build
 
 ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
@@ -15,17 +40,7 @@ ENV GO_FILEHASH=708effb774be8237570d0add163225abbdfaf4fca28b2611df167beba4feef89
 ENV GOCI_URL=https://github.com/golangci/golangci-lint/releases/download/v2.10.1/golangci-lint-2.10.1-linux-amd64.deb
 ENV GOCI_FILEHASH=8aa9b3aa14f39745eeb7fc7ff50bcac683e785397d1e4bc9afd2184b12c4ce86
 
-ENV APT_SNAPSHOT=20260205T000000Z
-
-COPY --from=cert /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
-
-RUN echo "APT::Snapshot ${APT_SNAPSHOT};" | tee /etc/apt/apt.conf.d/50snapshot \
-  && apt-get update && apt-get install -y --no-install-recommends \
-    curl \
-    git \
-    make \
-    zip \
-  && curl -s -L https://go.dev/dl/${GO_FILENAME} >/tmp/${GO_FILENAME} \
+RUN curl -s -L https://go.dev/dl/${GO_FILENAME} >/tmp/${GO_FILENAME} \
   && echo ${GO_FILEHASH} /tmp/${GO_FILENAME} | sha256sum --check \
   && tar -C /usr/local -xzf /tmp/${GO_FILENAME}
 
