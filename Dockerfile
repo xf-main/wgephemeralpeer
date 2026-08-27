@@ -28,7 +28,8 @@ RUN apt-get clean \
   && find /var/log/apt -type f -delete \
   && rm /var/log/dpkg.log /var/log/alternatives.log /var/cache/ldconfig/aux-cache
 
-FROM apt AS build
+# FROM ghcr.io/mullvad/wgephemeralpeer-apt:50e5e984635b29313ad0ce3af35fbd639de22706 AS build
+FROM ghcr.io/mullvad/wgephemeralpeer-apt@sha256:6490c34b72071133f254364ac63c669620a412563123466bb2949ac56d29d2f2 AS build
 
 ENV PATH="$PATH:/usr/local/go/bin:/root/go/bin"
 
