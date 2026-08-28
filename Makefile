@@ -7,6 +7,15 @@ export SOURCE_DATE_ISO = ${shell TZ=UTC git log ${VERSION} -1 --date=iso-local -
 BIN        = mullvad-upgrade-tunnel
 GO_LDFLAGS = -buildid= -s -w -X main.VERSION=${VERSION} -X main.buildTimestamp=${SOURCE_DATE_EPOCH}
 
+USE_GHCR ?= no
+
+# Opt-in ghcr makes build possible for end users.
+ifeq ($(USE_GHCR), yes)
+	REPLACE_GHCR := cat
+else
+	REPLACE_GHCR := sed 's~^FROM ghcr.io/.* AS build$$~FROM apt AS build~g'
+endif
+
 .PHONY: all
 all: ${BIN}
 
@@ -47,14 +56,16 @@ test:
 
 .PHONY: ci
 ci:
-	podman build --quiet --target test \
-		-t wgephemeralpeer-tester .
+	$(REPLACE_GHCR) Dockerfile | \
+		podman build --quiet --target test \
+			-t wgephemeralpeer-tester -f -
 	podman run --rm -v .:/build:Z -w /build \
 		-it wgephemeralpeer-tester make all vuln test vet
 
 .PHONY: build-container
 build-container:
-	podman build --target build -t wgephemeralpeer .
+	$(REPLACE_GHCR) Dockerfile | \
+		podman build --target build -t wgephemeralpeer -f -
 
 .PHONY: build
 build: build-container
