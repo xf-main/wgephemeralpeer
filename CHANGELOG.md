@@ -19,12 +19,13 @@ Line wrap the file at 100 chars.                                              Th
 * **Fixed**: for any bug fixes.
 * **Security**: in case of vulnerabilities.
 
-
-## [Unreleased]
+## [UNRELEASED]
 ### Security
-- Use Go 1.26.6
+- Use Go 1.26.9.
+- Update golang.org/x/net dependency.
 - Update CIRCL dependency.
 - Update gRPC dependency.
+
 
 ## [1.0.6] - 2025-02-03
 ### Added
