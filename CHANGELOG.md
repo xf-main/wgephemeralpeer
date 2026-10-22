@@ -21,7 +21,7 @@ Line wrap the file at 100 chars.                                              Th
 
 ## [UNRELEASED]
 ### Security
-- Use Go 1.26.9.
+- Use Go 1.26.10.
 - Update golang.org/x/net dependency.
 - Update CIRCL dependency.
 - Update gRPC dependency.
